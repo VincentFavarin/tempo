@@ -47,36 +47,16 @@ print("Accès à la page EDF Tempo...")
 send_discord_notification("Accès à la page EDF Tempo.")
 driver.get('https://particulier.edf.fr/fr/accueil/gestion-contrat/options/tempo.html#/')
 
-# Attendre que les éléments "Aujourd'hui" et "Demain" soient présents
-wait = WebDriverWait(driver, 30)  # Attendre jusqu'à 30 secondes pour que les éléments apparaissent
+# Attendre 5 secondes pour laisser le temps à la page de se charger dynamiquement
+time.sleep(5)
 
-# Initialisation des variables pour les informations d'aujourd'hui et de demain
-today_status, tomorrow_status = None, None
+# Capturer le HTML complet de la page après le chargement
+page_html = driver.page_source
+with open("page_source.html", "w", encoding="utf-8") as f:
+    f.write(page_html)
 
-try:
-    print("Récupération des informations d'aujourd'hui et de demain sur Tempo...")
-    send_discord_notification("Récupération des informations d'aujourd'hui et de demain sur Tempo...")
-
-    # Utiliser les attentes explicites pour attendre que les éléments contenant les informations apparaissent
-    today_info = wait.until(EC.presence_of_element_located((By.ID, 'a11y-today')))
-    tomorrow_info = wait.until(EC.presence_of_element_located((By.ID, 'a11y-tomorrow')))
-
-    # Extraire et afficher les informations pour aujourd'hui
-    today_date = today_info.find_element(By.TAG_NAME, 'strong').text
-    today_status = today_info.find_element(By.TAG_NAME, 'span').text
-    print(f"Aujourd'hui ({today_date}): {today_status}")
-
-    # Extraire et afficher les informations pour demain
-    tomorrow_date = tomorrow_info.find_element(By.TAG_NAME, 'strong').text
-    tomorrow_status = tomorrow_info.find_element(By.TAG_NAME, 'span').text
-    print(f"Demain ({tomorrow_date}): {tomorrow_status}")
-
-    # Notification après récupération des informations
-    send_discord_notification(f"Aujourd'hui ({today_date}): {today_status} - Demain ({tomorrow_date}): {tomorrow_status}")
-    
-except Exception as e:
-    print(f"Erreur lors de la récupération des données : {str(e)}")
-    send_discord_notification(f"Erreur lors de la récupération des données : {str(e)}")
+# Envoyer une notification pour indiquer que le HTML a été récupéré
+send_discord_notification("Le HTML de la page Tempo a été capturé et enregistré dans 'page_source.html'.")
 
 # Fermer le navigateur
 driver.quit()
