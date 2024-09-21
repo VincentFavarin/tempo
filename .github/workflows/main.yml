@@ -1,4 +1,4 @@
-name: Run Selenium Script
+name: Run Hello World Script
 
 on:
   schedule:
@@ -11,25 +11,20 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3  # Utilisation de la version v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3  # Utilisation de la version v3
       with:
         python-version: '3.x'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install selenium webdriver-manager requests
+        pip install requests
 
-    - name: Run Selenium Script
+    - name: Run Hello World Script
+      env:
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}  # Accès au secret
       run: |
         python jour.py
-
-    - name: Upload ChromeDriver logs
-      if: failure()
-      uses: actions/upload-artifact@v3
-      with:
-        name: chromedriver-log
-        path: chromedriver.log
