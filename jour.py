@@ -61,6 +61,10 @@ driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), opti
 url = "https://particulier.edf.fr/fr/accueil/gestion-contrat/options/tempo.html#/"
 driver.get(url)
 
+# Enregistrer la source de la page dans un fichier HTML
+with open("page_source.html", "w", encoding="utf-8") as f:
+    f.write(driver.page_source)
+
 max_attempts = 5
 attempt_count = 0
 
