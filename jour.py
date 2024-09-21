@@ -47,25 +47,25 @@ print("Accès à la page d'accueil de Wikipédia...")
 send_discord_notification("Accès à la page d'accueil de Wikipédia.")
 driver.get('https://fr.wikipedia.org/wiki/Wikip%C3%A9dia:Accueil_principal')
 
-# Attendre que le titre de l'article principal soit présent
+# Attendre que le titre de la page soit présent
 wait = WebDriverWait(driver, 30)  # Attendre jusqu'à 30 secondes pour que les éléments apparaissent
 
-# Initialisation des variables pour le titre de l'article
-article_title = None
+# Initialisation des variables pour le titre de la page
+page_title = None
 
 try:
-    print("Récupération du titre de l'article principal de Wikipédia...")
-    send_discord_notification("Récupération du titre de l'article principal de Wikipédia...")
+    print("Récupération du titre de la page d'accueil de Wikipédia...")
+    send_discord_notification("Récupération du titre de la page d'accueil de Wikipédia...")
 
-    # Utiliser les attentes explicites pour attendre que l'élément contenant le titre de l'article principal apparaisse
-    article_title_element = wait.until(EC.presence_of_element_located((By.ID, 'mp-tfa-h2')))
+    # Utiliser les attentes explicites pour attendre que l'élément contenant le titre de la page (<h1>) apparaisse
+    page_title_element = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'h1')))
     
-    # Extraire et afficher le titre de l'article
-    article_title = article_title_element.text
-    print(f"Article principal : {article_title}")
+    # Extraire et afficher le titre de la page
+    page_title = page_title_element.text
+    print(f"Titre de la page : {page_title}")
 
     # Notification après récupération des informations
-    send_discord_notification(f"Titre de l'article principal de Wikipédia : {article_title}")
+    send_discord_notification(f"Titre de la page d'accueil de Wikipédia : {page_title}")
     
 except Exception as e:
     print(f"Erreur lors de la récupération des données : {str(e)}")
