@@ -15,12 +15,6 @@ HA_TOKEN = os.getenv('HA_TOKEN')
 print(f"Webhook Discord: {'configuré' if DISCORD_WEBHOOK_URL else 'non configuré'}")
 print(f"Token Home Assistant: {'configuré' if HA_TOKEN else 'non configuré'}")
 
-# Envoyer une notification au début du script
-send_discord_notification("Début de l'exécution du script.")
-
-# URL de Home Assistant
-HA_URL = 'http://homeassistant.local:8123/api/states/'
-
 # Fonction pour envoyer des notifications à Discord
 def send_discord_notification(message):
     print(f"Envoi de la notification : {message}")
@@ -31,13 +25,10 @@ def send_discord_notification(message):
     else:
         print(f"Erreur lors de l'envoi de la notification Discord : {response.text}")
 
-# Notification après la création de la fonction
-send_discord_notification("Fonction send_discord_notification créée.")
-
 # Fonction pour envoyer des données à Home Assistant avec des tentatives répétées jusqu'à succès
 def update_sensor(entity_id, state, attributes={}):
     print(f"Mise à jour du capteur : {entity_id} avec l'état {state}")
-    url = HA_URL + entity_id
+    url = 'http://homeassistant.local:8123/api/states/' + entity_id
     headers = {
         'Authorization': f'Bearer {HA_TOKEN}',
         'Content-Type': 'application/json',
@@ -65,8 +56,8 @@ def update_sensor(entity_id, state, attributes={}):
         print(f"Échec après {max_attempts} tentatives de mise à jour de {entity_id}")
         send_discord_notification(f"Échec après {max_attempts} tentatives de mise à jour de {entity_id}")
 
-# Notification après la création de la fonction update_sensor
-send_discord_notification("Fonction update_sensor créée.")
+# Envoyer une notification au début du script (après la définition de la fonction)
+send_discord_notification("Début de l'exécution du script.")
 
 # Configuration de Selenium pour utiliser ChromeDriver
 chrome_options = Options()
