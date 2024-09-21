@@ -1,4 +1,4 @@
-name: Run Hello World Script
+name: Run Selenium Script
 
 on:
   schedule:
@@ -11,20 +11,21 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Utilisation de la version v3
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v3  # Utilisation de la version v3
+      uses: actions/setup-python@v3
       with:
         python-version: '3.x'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests
+        pip install selenium webdriver-manager requests
 
-    - name: Run Hello World Script
+    - name: Run Selenium Script
       env:
-        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}  # Accès au secret
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        HA_TOKEN: ${{ secrets.HA_TOKEN }}
       run: |
         python jour.py
