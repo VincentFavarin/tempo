@@ -1,66 +1,113 @@
-import requests
 import os
-import time
+import requests
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
-# Utiliser les secrets GitHub pour Discord Webhook
+# Récupérer l'URL du webhook Discord et le token Home Assistant depuis les variables d'environnement
 DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL')
+HA_TOKEN = os.getenv('HA_TOKEN')
+HA_URL = 'http://homeassistant.local:8123/api/states/'
 
-# Vérification si les secrets sont bien récupérés
-print(f"Webhook Discord: {'configuré' if DISCORD_WEBHOOK_URL else 'non configuré'}")
-
-# Fonction pour envoyer des notifications à Discord
-def send_discord_notification(message):
-    print(f"Envoi de la notification : {message}")
-    data = {"content": message}
-    response = requests.post(DISCORD_WEBHOOK_URL, json=data)
-    if response.status_code == 204:
-        print("Notification envoyée à Discord avec succès")
+# Fonction pour envoyer un message via Discord
+def send_to_discord(message):
+    if DISCORD_WEBHOOK_URL:
+        data = {"content": message}
+        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        if response.status_code == 204:
+            print("Message envoyé avec succès.")
+        else:
+            print(f"Erreur lors de l'envoi du message : {response.status_code}")
     else:
-        print(f"Erreur lors de l'envoi de la notification Discord : {response.text}")
+        print("DISCORD_WEBHOOK_URL n'est pas défini.")
 
-# Envoyer une notification au début du script (après la définition de la fonction)
-send_discord_notification("Début de l'exécution du script de scraping sur la page EDF Tempo.")
+# Fonction pour mettre à jour l'état d'un capteur dans Home Assistant
+def update_sensor(entity_id, state, attributes={}):
+    url = HA_URL + entity_id
+    headers = {
+        'Authorization': f'Bearer {HA_TOKEN}',
+        'Content-Type': 'application/json',
+    }
+    data = {
+        'state': state,
+        'attributes': attributes,
+    }
+    max_attempts = 5
+    attempt_count = 0
+    
+    while attempt_count < max_attempts:
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 200:
+            print(f'{entity_id} mis à jour avec succès : {state}')
+            break
+        else:
+            attempt_count += 1
+            print(f'Tentative {attempt_count} : Erreur lors de la mise à jour de {entity_id} : {response.text}')
+            time.sleep(5)
 
-# Configuration de Selenium pour utiliser ChromeDriver
+    if attempt_count == max_attempts:
+        print(f"Échec après {max_attempts} tentatives de mise à jour de {entity_id}")
+
+# Configuration de Selenium avec WebDriver Manager
 chrome_options = Options()
 chrome_options.add_argument("--headless")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
 
-# Envoyer une notification après la configuration de Selenium
-send_discord_notification("Selenium configuré avec ChromeDriver.")
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
-service = Service(ChromeDriverManager().install())
-service.log_path = "chromedriver.log"
-service.verbose = True
-driver = webdriver.Chrome(service=service, options=chrome_options)
+# URL de la page que tu veux récupérer
+url = "https://particulier.edf.fr/fr/accueil/gestion-contrat/options/tempo.html#/"
+driver.get(url)
 
-# Accéder à l'URL de la page EDF Tempo
-print("Accès à la page EDF Tempo...")
-send_discord_notification("Accès à la page EDF Tempo.")
-driver.get('https://particulier.edf.fr/fr/accueil/gestion-contrat/options/tempo.html#/')
+max_attempts = 5
+attempt_count = 0
 
-# Attendre 5 secondes pour laisser le temps à la page de se charger dynamiquement
-time.sleep(5)
+while attempt_count < max_attempts:
+    try:
+        time.sleep(5)
 
-# Capturer le HTML complet de la page après le chargement
-page_html = driver.page_source
-with open("page_source.html", "w", encoding="utf-8") as f:
-    f.write(page_html)
+        # Récupérer la couleur du jour actuel
+        aujourd_hui = driver.find_element(By.CSS_SELECTOR, ".jtp-tempodays__item--blue, .jtp-tempodays__item--red, .jtp-tempodays__item--white")
+        couleur_aujourd_hui = aujourd_hui.text.split("\n")[2]
+        jour_aujourd_hui = aujourd_hui.text.split("\n")[1]
 
-# Envoyer une notification pour indiquer que le HTML a été récupéré
-send_discord_notification("Le HTML de la page Tempo a été capturé et enregistré dans 'page_source.html'.")
+        # Récupérer la couleur du jour suivant
+        demain = driver.find_element(By.CSS_SELECTOR, ".jtp-tempodays__item--indet")
+        jour_demain = demain.text.split("\n")[1]
+        couleur_demain = "Couleur à venir"
+
+        # Préparer le message formaté
+        message = (
+            f"Aujourd'hui ({jour_aujourd_hui}), on est en {couleur_aujourd_hui}.\n"
+            f"Demain ({jour_demain}), on sera en {couleur_demain}.\n"
+            f"Informations récupérées après {attempt_count + 1} tentative(s)."
+        )
+
+        # Envoyer le message à Discord
+        send_to_discord(message)
+
+        # Mise à jour des entités Home Assistant
+        update_sensor('sensor.tempo_aujourdhui', couleur_aujourd_hui, {
+            'friendly_name': 'Tempo Aujourd\'hui',
+            'icon': 'mdi:calendar-today',
+        })
+        update_sensor('sensor.tempo_demain', couleur_demain, {
+            'friendly_name': 'Tempo Demain',
+            'icon': 'mdi:calendar-tomorrow',
+        })
+
+        break
+
+    except Exception as e:
+        attempt_count += 1
+        print(f"Tentative {attempt_count} : Échec lors de la récupération des données")
+        time.sleep(300)
+
+if attempt_count == max_attempts:
+    print(f"Échec après {max_attempts} tentatives de récupération des données")
+    send_to_discord(f"Échec après {max_attempts} tentatives de récupération des informations sur la page")
 
 # Fermer le navigateur
 driver.quit()
-
-# Notification de fin de script
-send_discord_notification("Script terminé.")
-print("Script terminé.")
