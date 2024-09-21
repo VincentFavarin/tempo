@@ -107,7 +107,7 @@ while attempt_count < max_attempts:
     except Exception as e:
         attempt_count += 1
         print(f"Tentative {attempt_count} : Échec lors de la récupération des données")
-        time.sleep(300)
+        time.sleep(3)
 
 if attempt_count == max_attempts:
     print(f"Échec après {max_attempts} tentatives de récupération des données")
