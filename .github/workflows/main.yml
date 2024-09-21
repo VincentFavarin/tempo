@@ -29,3 +29,9 @@ jobs:
         HA_TOKEN: ${{ secrets.HA_TOKEN }}
       run: |
         python jour.py
+
+    - name: Upload HTML page source as an artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: page-source-html
+        path: page_source.html
