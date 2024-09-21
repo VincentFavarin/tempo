@@ -25,7 +25,7 @@ jobs:
 
     - name: Run Selenium Script
       run: |
-        python ton_fichier_script.py  # Remplace par le nom de ton script
+        python jour.py
 
     - name: Upload ChromeDriver logs
       if: failure()
