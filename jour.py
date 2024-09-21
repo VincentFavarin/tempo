@@ -38,7 +38,7 @@ def update_sensor(entity_id, state, attributes={}):
         'attributes': attributes,
     }
     max_attempts = 5  # Limite le nombre de tentatives pour éviter une boucle infinie
-    attempt_count = 0  # Compteur de tentatives actuel
+    attempt_count = 0  # Compteur de tentatives actuel 
     
     while attempt_count < max_attempts:
         response = requests.post(url, headers=headers, json=data)
